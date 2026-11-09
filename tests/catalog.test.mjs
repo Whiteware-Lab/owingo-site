@@ -23,3 +23,12 @@ test('No release yields no dead download link; higher build wins',()=>{
   const entry=validateRelease(manifest,release);
   assert.equal(newest([{...entry,build:12},entry]).build,14);
 });
+test('Independent Windows ZIP and Android APK releases have separate feeds',()=>{
+  const win={...artifact,platform:'windows',name:'owingo-0.8.0-build.14-windows.zip'};
+  const winAsset={...release.assets[0],name:win.name};
+  const entry=validateRelease({...manifest,artifacts:[artifact,win]},{...release,assets:[...release.assets,winAsset]});
+  assert.equal(newest([entry],'windows').build,14);
+  assert.match(releaseMarkup(entry,'windows').DOWNLOAD_ACTION,/windows\.zip/);
+  assert.equal(newest([validateRelease(manifest,release)],'windows'),null);
+  assert.equal(validateRelease({...manifest,artifacts:[artifact,artifact]},release),null);
+});

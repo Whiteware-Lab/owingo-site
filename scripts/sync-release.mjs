@@ -25,6 +25,11 @@ for (let page=1; ; page++) {
   if (releases.length<100) break;
 }
 const entry=newest(valid);
-if (entry && valid.filter(v=>v.build===entry.build).length>1) throw new Error('Duplicate published build number');
-await writeFile(process.argv[2] ?? 'catalog.json',JSON.stringify(entry?[entry]:[],null,2)+'\n');
+const windows=newest(valid,'windows');
+for (const [platform,latest] of [['android',entry],['windows',windows]]) {
+  if (latest && valid.filter(v=>v.build===latest.build && v.artifacts.some(a=>a.platform===platform)).length>1) {
+    throw new Error('Duplicate published build number: '+platform);
+  }
+}
+await writeFile(process.argv[2] ?? 'catalog.json',JSON.stringify([...new Set([entry,windows].filter(Boolean))],null,2)+String.fromCharCode(10));
 console.log(entry ? `Published build: ${entry.build}` : 'No public Android release');
